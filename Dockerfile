@@ -56,14 +56,19 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy prisma for migrations (schema + client)
+# Copy prisma schema FIRST (before other node_modules)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Copy package.json for prisma CLI (contains schema path)
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+
+# Copy prisma binaries and client
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 
-# Copy package.json for prisma CLI
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+# Verify prisma schema exists
+RUN ls -la ./prisma/ && cat ./prisma/schema.prisma | head -5
 
 USER nextjs
 
