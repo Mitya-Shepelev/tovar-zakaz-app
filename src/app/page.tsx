@@ -5,6 +5,8 @@ import { Footer } from "@/components/landing/Footer";
 import { DashboardPreview } from "@/components/landing/DashboardPreview";
 import Pricing from "@/components/landing/Pricing";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LandingPage() {
   const settings = await getPublicSettings();
   const footerPages = await getFooterPages();

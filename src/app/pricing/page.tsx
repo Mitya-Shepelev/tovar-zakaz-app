@@ -3,6 +3,8 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { getPublicSettings, getFooterPages } from "@/lib/public-data";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PricingPage() {
   const settings = await getPublicSettings();
   const footerPages = await getFooterPages();
