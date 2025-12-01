@@ -73,6 +73,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_module
 # Verify prisma schema exists
 RUN ls -la ./prisma/ && cat ./prisma/schema.prisma | head -5
 
+# Copy start script
+COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
+RUN chmod +x ./start.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -80,5 +84,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Start the application
-CMD ["node", "server.js"]
+# Start with migrations
+CMD ["./start.sh"]
