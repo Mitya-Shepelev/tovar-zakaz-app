@@ -278,8 +278,8 @@ export default function DealsPage() {
       {/* Items Modal */}
       {isItemsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800 scale-100 animate-in zoom-in-95 duration-200">
-            <div className="bg-indigo-600 p-4 flex items-center justify-between text-white">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200 dark:border-slate-800 scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="bg-indigo-600 p-4 flex items-center justify-between text-white shrink-0">
               <div className="flex items-center gap-2 font-bold text-lg">
                 <Package size={24} />
                 Товары клиента
@@ -292,43 +292,53 @@ export default function DealsPage() {
               </button>
             </div>
             
-            <div className="p-6">
-              <div className="mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-6 flex-1 overflow-hidden flex flex-col">
+              <div className="mb-4 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
                  <div className="text-sm text-slate-500 dark:text-slate-400">Клиент</div>
                  <div className="font-bold text-lg text-slate-900 dark:text-white">{selectedClientName}</div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-4 max-h-64 overflow-y-auto">
+              <div className="bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex-1 overflow-auto">
                 {selectedClientItems.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                  <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                     Нет списка товаров
                   </div>
                 ) : (
-                  <ul className="space-y-3">
-                    {selectedClientItems.map((item, idx) => (
-                      <li key={item.id || idx} className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
-                         <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                              {idx + 1}
-                            </span>
-                            <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">
-                              {item.name || "Товар"}
-                            </span>
-                         </div>
-                         <span className="font-bold text-slate-900 dark:text-white text-sm whitespace-nowrap ml-2">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead className="bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
+                      <tr>
+                        <th className="border-b border-r border-slate-200 dark:border-slate-800 p-3 font-semibold text-slate-600 dark:text-slate-300 w-16 text-center">№</th>
+                        <th className="border-b border-r border-slate-200 dark:border-slate-800 p-3 font-semibold text-slate-600 dark:text-slate-300">Наименование товара</th>
+                        <th className="border-b border-slate-200 dark:border-slate-800 p-3 font-semibold text-slate-600 dark:text-slate-300 text-right w-40">Цена</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {selectedClientItems.map((item, idx) => (
+                        <tr key={item.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                          <td className="border-r border-slate-100 dark:border-slate-800 p-3 text-center text-slate-500 dark:text-slate-500">
+                            {idx + 1}
+                          </td>
+                          <td className="border-r border-slate-100 dark:border-slate-800 p-3 text-slate-900 dark:text-slate-100">
+                            {item.name || "Товар"}
+                          </td>
+                          <td className="p-3 text-right font-mono font-medium text-slate-900 dark:text-slate-100">
                             {formatCurrency(item.price)}
-                         </span>
-                      </li>
-                    ))}
-                  </ul>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
               
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                  <span className="text-slate-500 dark:text-slate-400 text-sm">Итого по списку</span>
-                  <span className="font-bold text-xl text-emerald-600 dark:text-emerald-400">
-                    {formatCurrency(selectedClientItems.reduce((acc, item) => acc + item.price, 0))}
-                  </span>
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+                  <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">Итого по списку: <span className="text-slate-900 dark:text-white ml-1">{selectedClientItems.length} шт.</span></span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">Общая сумма:</span>
+                    <span className="font-bold text-xl text-emerald-600 dark:text-emerald-400">
+                      {formatCurrency(selectedClientItems.reduce((acc, item) => acc + item.price, 0))}
+                    </span>
+                  </div>
               </div>
             </div>
           </div>
