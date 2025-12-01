@@ -21,7 +21,7 @@ services:
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=tovar-zakaz-app2025!
       - POSTGRES_DB=tovar_zakaz
     volumes:
       - postgres_data:/var/lib/postgresql/data
