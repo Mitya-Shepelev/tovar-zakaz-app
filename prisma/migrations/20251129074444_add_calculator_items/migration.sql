@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Client" ADD COLUMN     "calculatorItems" DOUBLE PRECISION[] DEFAULT ARRAY[]::DOUBLE PRECISION[];

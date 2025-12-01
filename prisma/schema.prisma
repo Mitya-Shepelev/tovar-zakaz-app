@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  password           String
+  name               String?
+  image              String?
+  role               String   @default("user") // "user" | "admin"
+  supplierCommission Float    @default(0)
+  sellerCommission   Float    @default(0)
+  isBanned           Boolean  @default(false)
+  banExpires         DateTime?
+  banReason          String?
+  deals              Deal[]
+  tickets            SupportTicket[]
+  planId             String?
+  plan               Plan?     @relation(fields: [planId], references: [id])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Deal {
+  id                 String   @id @default(cuid())
+    userId             String
+    user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    supplierCommission Float    @default(0)
+    sellerCommission   Float    @default(0)
+    date               DateTime @default(now())
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+    clients            Client[]
+  }
+  
+  model Client {
+    id          String   @id @default(cuid())
+    dealId      String
+    deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+    name        String
+    phone       String
+    orderAmount Float
+    totalItems  Int      @default(0)
+    calculatorItems Json @default("[]")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+  }
+  
+  model Settings {
+    id        String   @id @default(cuid())
+    key       String   @unique
+    value     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
+  
+  model Page {
+    id           String   @id @default(cuid())
+    title        String
+    slug         String   @unique
+    content      String
+    isPublished  Boolean  @default(true)
+    showInFooter Boolean  @default(false)
+    order        Int      @default(0)
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+  }
+  
+  model SupportTicket {
+    id        String           @id @default(cuid())
+    subject   String
+    status    String           @default("open") // open, closed
+    userId    String
+    user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    messages  SupportMessage[]
+    createdAt DateTime         @default(now())
+    updatedAt DateTime         @updatedAt
+  }
+  
+  model SupportMessage {
+    id        String        @id @default(cuid())
+    ticketId  String
+    ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+    senderId  String
+    message   String
+    attachments Json      @default("[]") // Array of URLs
+      isAdmin   Boolean       @default(false)
+      isRead    Boolean       @default(false)
+      createdAt DateTime      @default(now())
+    }
+    
+    model Plan {
+      id          String   @id @default(cuid())
+      name        String
+      description String?
+      price       Float
+      currency    String   @default("RUB")
+      interval    String   @default("month") // month, year
+        features    Json     @default("[]") // Array of strings
+        isPopular   Boolean  @default(false)
+        isActive    Boolean  @default(true)
+        isPublic    Boolean  @default(true)
+        order       Int      @default(0)
+        users       User[]
+        createdAt   DateTime @default(now())
+        updatedAt   DateTime @updatedAt
+      }
+      
