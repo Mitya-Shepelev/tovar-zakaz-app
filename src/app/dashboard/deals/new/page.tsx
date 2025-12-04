@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Plus, 
@@ -40,9 +40,30 @@ export default function NewDealPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Commission settings from user
+  const [supplierCommission, setSupplierCommission] = useState(0);
+  const [sellerCommission, setSellerCommission] = useState(0);
+
   // Calculator State
   const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [activeClientId, setActiveClientId] = useState<string | null>(null);
+
+  // Load user's commission settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/user/settings");
+        if (res.ok) {
+          const data = await res.json();
+          setSupplierCommission(data.supplierCommission || 0);
+          setSellerCommission(data.sellerCommission || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const addClient = () => {
     setClients([
@@ -86,6 +107,26 @@ export default function NewDealPage() {
 
   const getTotalAmount = () => {
     return clients.reduce((sum, c) => sum + (parseFloat(c.orderAmount) || 0), 0);
+  };
+
+  // Calculate commissions for a single client
+  const getClientCalculations = (orderAmount: number) => {
+    const baseAmount = orderAmount;
+    const supplierCommAmount = baseAmount * (supplierCommission / 100);
+    const intermediateAmount = baseAmount + supplierCommAmount;
+    const sellerCommAmount = intermediateAmount * (sellerCommission / 100);
+    const grandTotal = intermediateAmount + sellerCommAmount;
+    return { baseAmount, supplierCommAmount, sellerCommAmount, grandTotal };
+  };
+
+  // Calculate total commissions for all clients
+  const getTotalCalculations = () => {
+    const baseAmount = getTotalAmount();
+    const supplierCommAmount = baseAmount * (supplierCommission / 100);
+    const intermediateAmount = baseAmount + supplierCommAmount;
+    const sellerCommAmount = intermediateAmount * (sellerCommission / 100);
+    const grandTotal = intermediateAmount + sellerCommAmount;
+    return { baseAmount, supplierCommAmount, sellerCommAmount, grandTotal };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -320,41 +361,96 @@ export default function NewDealPage() {
                                                                               />
                                                                             </div>
                                                                           </div>                                                        </div>
+
+              {/* Commission breakdown for this client */}
+              {(supplierCommission > 0 || sellerCommission > 0) && parseFloat(client.orderAmount) > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                    {(() => {
+                      const calc = getClientCalculations(parseFloat(client.orderAmount) || 0);
+                      return (
+                        <>
+                          {supplierCommission > 0 && (
+                            <div className="flex justify-between">
+                              <span>Комиссия поставщика ({supplierCommission}%):</span>
+                              <span className="font-medium">{formatCurrency(calc.supplierCommAmount)}</span>
+                            </div>
+                          )}
+                          {sellerCommission > 0 && (
+                            <div className="flex justify-between">
+                              <span>Комиссия продавца ({sellerCommission}%):</span>
+                              <span className="font-medium">{formatCurrency(calc.sellerCommAmount)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-sm font-semibold text-slate-700 dark:text-slate-300 pt-1">
+                            <span>Итого с комиссиями:</span>
+                            <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(calc.grandTotal)}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
         {/* Footer / Total */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 sticky bottom-4 z-10">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
+          <div className="flex flex-col gap-4">
+            {/* Commission breakdown */}
+            {(supplierCommission > 0 || sellerCommission > 0) && (
+              <div className="flex flex-col gap-1 text-sm text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
+                <div className="flex justify-between">
+                  <span>Сумма заказов:</span>
+                  <span>{formatCurrency(getTotalCalculations().baseAmount)}</span>
+                </div>
+                {supplierCommission > 0 && (
+                  <div className="flex justify-between">
+                    <span>Комиссия поставщика ({supplierCommission}%):</span>
+                    <span>{formatCurrency(getTotalCalculations().supplierCommAmount)}</span>
+                  </div>
+                )}
+                {sellerCommission > 0 && (
+                  <div className="flex justify-between">
+                    <span>Комиссия продавца ({sellerCommission}%):</span>
+                    <span>{formatCurrency(getTotalCalculations().sellerCommAmount)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">Итоговая сумма</div>
                 <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(getTotalAmount())}
+                  {formatCurrency((supplierCommission > 0 || sellerCommission > 0) ? getTotalCalculations().grandTotal : getTotalAmount())}
                 </div>
-            </div>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 <button
-                    type="button"
-                    onClick={() => router.back()}
-                    className="flex-1 sm:flex-none px-6 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition font-medium"
+                  type="button"
+                  onClick={() => router.back()}
+                  className="flex-1 sm:flex-none px-6 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition font-medium"
                 >
-                    Отмена
+                  Отмена
                 </button>
                 <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-medium shadow-lg shadow-indigo-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-medium shadow-lg shadow-indigo-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    {loading ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                        <>
-                            <Save size={20} />
-                            Создать заказ
-                        </>
-                    )}
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Save size={20} />
+                      Создать заказ
+                    </>
+                  )}
                 </button>
+              </div>
             </div>
           </div>
         </div>
